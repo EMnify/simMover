@@ -1,4 +1,9 @@
-# SIM Mover - Helper Script
+# EMnify SIM Mover (Helper Script)
+This script is here to show how you can build custom logic on top of our comprehensive and easy to use APIs to manage your SIM cards in an automated manner.
+
+It will help you shift a batch of SIM cards from one organisation to another one in case you need to.
+
+It is build in the programming language Node.js which is an easy language most developers and even frontend developers can develop and that runs on all platforms.
 
 ## Installation
 ### On Windows 
