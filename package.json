@@ -1,0 +1,13 @@
+{
+  "name": "@emnify/imsimover",
+  "version": "1.0.0",
+  "description": "EMnify helper script to move a list of IMSIs to another organisation",
+  "main": "index.js",
+  "author": "EMnify GmbH",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "commander": "^2.19.0",
+    "request": "^2.88.0"
+  }
+}
