@@ -289,6 +289,11 @@ sshpk@^1.7.0:
     safer-buffer "^2.0.2"
     tweetnacl "~0.14.0"
 
+throttled-request@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/throttled-request/-/throttled-request-0.1.1.tgz#4146b70b77a5aeca33c46332cf13eb9c791e971b"
+  integrity sha1-QUa3C3elrsozxGMyzxPrnHkelxs=
+
 tough-cookie@~2.4.3:
   version "2.4.3"
   resolved "https://registry.yarnpkg.com/tough-cookie/-/tough-cookie-2.4.3.tgz#53f36da3f47783b0925afa06ff9f3b165280f781"

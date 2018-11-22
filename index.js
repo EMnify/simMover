@@ -3,11 +3,17 @@
 
 const program = require('commander');
 const request = require('request');
+const throttledRequest = require('throttled-request')(request);
 const fs = require('fs');
 const path = require('path');
 
+throttledRequest.configure({
+  requests: 2,
+  milliseconds: 1000
+}); //This will throttle the requests so no more than 3 are made every second
+
 program
-  .version('1.0.0')
+  .version('1.1.0')
   .option('-i, --imsiList [list of imsis]', 'IMSIs to be moved like 123456789123456,223456789123456')
   .option('-f, --imsiCsvFile [path]', 'Path to a file that contains a comma seperated list of IMSIs in UTF-8 encoding without a headline')
   .option('-o, --destinationOrgId [orgId]', 'Destination organisation ID to move them to')
@@ -56,7 +62,7 @@ function readImsis() {
     });
   } else if (program.imsiList) {
     imsis = program.imsiList.split(',');
-    return imsis;
+    getSimIdsFromImsis(imsis);
   }
 }
 
@@ -66,7 +72,7 @@ function getSimIdsFromImsis(imsis) {
     let arrayOfSimIds = [];
     imsis.forEach(function (imsi, index, array) {
       //TODO query EMnify API for SIM ID by ICCID
-      request.get(API_URL + "/sim?page=1&per_page=2&q=imsi:" + imsi, {
+      throttledRequest(API_URL + "/sim?page=1&per_page=2&q=imsi:" + imsi, {
         'auth': {
           'bearer': auth_token
         },
@@ -76,13 +82,12 @@ function getSimIdsFromImsis(imsis) {
           return console.error("Error getting the SIM for", imsi, err);
         }
         if (!body.length) {
-          return console.error("IMSI", imsi, "matches no SIM. Abording!");
+          return console.error("IMSI", imsi, "matches no SIM.");
         }
         if (body.length > 1) {
-          return console.error("IMSI", imsi, "matches more than one SIM. Abording!");
+          return console.error("IMSI", imsi, "matches more than one SIM.");
         }
         if (res.statusCode === 200) {
-          console.log(body);
           let simId = body[0].id;
           arrayOfSimIds.push(simId);
           console.log('sim ID for', imsi, 'is', simId);
@@ -92,7 +97,7 @@ function getSimIdsFromImsis(imsis) {
           }
         }
         else {
-          return console.error("Errorcode", res.statusCode, "occured while getting SIM with IMSI", imsi, "Abording!");
+          return console.error("Errorcode", res.statusCode, "occured while getting SIM with IMSI", imsi);
         }
       });
     });
@@ -106,13 +111,15 @@ function updateAllSimsOrgId(simIds) {
       console.log('DRY RUN: Update simId', simId, 'to organisation', program.destinationOrgId);
     }
     else {
-      request.patch(API_URL + "/sim/" + simId, {
-        'auth': {
-          'bearer': auth_token
+      throttledRequest({
+        method: 'PATCH',
+        uri: API_URL + "/sim/" + simId,
+        auth: {
+          bearer: auth_token
         },
         body: {
-          "customer_org": {
-            "id": program.destinationOrgId
+          customer_org: {
+            id: program.destinationOrgId
           },
         },
         json: true
@@ -128,7 +135,7 @@ function updateAllSimsOrgId(simIds) {
           }
         }
         else {
-          return console.error("Errorcode", res.statusCode, "occured while updating SIMid", simId, "Abording!");
+          return console.error("Errorcode", res.statusCode, "occured while updating SIMid", simId);
         }
       });
     }
