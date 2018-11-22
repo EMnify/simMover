@@ -3,7 +3,9 @@ This script is here to show how you can build custom logic on top of our compreh
 
 It will help you shift a batch of SIM cards from one organisation to another one in case you need to.
 
-It is build in the programming language Node.js which is an easy language most developers and even frontend developers can develop and that runs on all platforms.
+It is build in the programming language Node.js (Java Script) which is an easy language most developers and even frontend developers can develop and that runs on all platforms.
+
+The execution of the API requests is being throttled to 2 requests per second in order to not get blocked due to overloading the API.
 
 ## Installation
 ### On Windows 
