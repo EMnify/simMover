@@ -79,7 +79,6 @@ let simsProcessed = 0;
         return console.error("SIM", simId, "matches more than one SIM.");
       }
       else if (res.statusCode === 200) {
-        console.log(body);
         let endpointId = body[0].id;
         arrayOfEndpointIds.push(endpointId);
         console.log('SIM', simId, 'is connected to', endpointId);
