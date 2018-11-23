@@ -14,7 +14,7 @@ throttledRequest.configure({
 }); //This will throttle the requests so no more than 3 are made every second
 
 program
-  .version('1.1.0')
+  .version('1.2.0')
   .option('-i, --imsiList [list of imsis]', 'IMSIs to be moved like 123456789123456,223456789123456')
   .option('-f, --imsiCsvFile [path]', 'Path to a file that contains a comma seperated list of IMSIs in UTF-8 encoding without a headline')
   .option('-o, --destinationOrgId [orgId]', 'Destination organisation ID to move them to')
