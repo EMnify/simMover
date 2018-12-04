@@ -15,6 +15,7 @@ throttledRequest.configure({
 
 program
   .version('1.2.0')
+  .option('-y, --identifier [list of imsis]', 'IMSIs to be moved like 123456789123456,223456789123456')
   .option('-i, --imsiList [list of imsis]', 'IMSIs to be moved like 123456789123456,223456789123456')
   .option('-f, --imsiCsvFile [path]', 'Path to a file that contains a comma seperated list of IMSIs in UTF-8 encoding without a headline')
   .option('-o, --destinationOrgId [orgId]', 'Destination organisation ID to move them to')
@@ -74,6 +75,8 @@ let simsProcessed = 0;
       }
       else if (!body.length) {
         console.log("SIM", simId, "is not connected to an endpoint");
+        eventEmitter.emit("sims released from endpoints");
+        return true;
       }
       else if (body.length > 1) {
         return console.error("SIM", simId, "matches more than one SIM.");
