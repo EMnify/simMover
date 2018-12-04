@@ -33,26 +33,27 @@ cd simMover
 npm install
 node index.js --help
 ```
-> This should doenload this script, install all dependent modules and print the help that should explain you how to use the script.
+> This should download this script, install all dependent modules and print the help that should explain you how to use the script.
 
 ## Usage
 > The script can take a file as input like the sample file with comma seperated IMSIS like so:
 ```
-node index.js --imsiCsvFile sampleImsis.csv --destinationOrgId 4192 --dryRun --appToken tokenOfYouAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
+node index.js --simIdentifierType iccid --csvFile sample.csv --destinationOrgId 4192 --dryRun --appToken tokenOfYourAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
 ```
 > Or you give the imsis directly as parameters like so:
 ```
-node index.js --imsiList 123456789123456,223456789123456 --destinationOrgId 4192 --dryRun --appToken tokenOfYouAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
+node index.js --simIdentifierType iccid --list 123,2345 --destinationOrgId 4192 --dryRun --appToken tokenOfYourAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
 ```
 
 ### Parameters
-| Shorthand | Parameter     | Description                                                                                                | Required | Sample                          |
-|-----------|---------------|------------------------------------------------------------------------------------------------------------|----------|---------------------------------|
-| -V        | --version     | output the version number                                                                                  | false    |                                 |
-| -i        | --imsiList    | IMSIs to be moved                                                                                          |          | 123456789123456,223456789123456 |
-| -f        | --imsiCsvFile | Path to a file that contains a comma seperated list of IMSIs Reuqired format: UTF-8 encoding & NO headline |          | sample.csv                      |
+| Shorthand | Parameter | Description  | Required | Sample |
+|-|-|-|-|-|
+| -V | --version            | output the version number                                                       | false |       |
+| -t | --simIdentifierType  | Define whether you want to identiy your SIM by simid, imsi or iccid             | true  | iccid |
+| -l | --list               | List of simIdentifiers to be moved like 123,234'                                |       |       |
+| -c | --imsiCsvFile        | Path to a file that contains a comma seperated list of simIdentifiers - NO headline |       | sample.csv |
 | -o | --destinationOrgId   | Destination organisation ID to move them to                                     | true  | 1234  |
 | -d | --dryRun             | Outputs planned changes without executing them live                             | false |       |
-| -t | --appToken           | Application token of the account you act from                                   | true  | token |
+| -t | --appToken           | Application token of the account you act from  (MNO, Reseller, Service Provider)| true  | token |
 | -e | --enterpriseAppToken | Application token of the enterprise account you want to move the SIMs away from | true  | token |
 | -h | --help               | Outputs usage information                                                       | false |       |

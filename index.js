@@ -14,13 +14,13 @@ throttledRequest.configure({
 }); //This will throttle the requests so no more than 3 are made every second
 
 program
-  .version('1.2.0')
-  .option('-y, --identifier [list of imsis]', 'IMSIs to be moved like 123456789123456,223456789123456')
-  .option('-i, --imsiList [list of imsis]', 'IMSIs to be moved like 123456789123456,223456789123456')
-  .option('-f, --imsiCsvFile [path]', 'Path to a file that contains a comma seperated list of IMSIs in UTF-8 encoding without a headline')
+  .version('1.3.0')
+  .option('-t, --simIdentifierType [simid, imsi or iccid]', 'Define whether you want to identiy your SIM by simid, imsi or iccid')
+  .option('-l, --list [list of simids, imsis, or iccids]', 'List of simIdentifiers to be moved like 123,234')
+  .option('-c, --csvFile [path]', 'Path to a file that contains a comma seperated list of simIdentifiers - NO headline')
   .option('-o, --destinationOrgId [orgId]', 'Destination organisation ID to move them to')
   .option('-d, --dryRun', 'Output changes without executing them live')
-  .option('-t, --appToken [token]', 'Application token of the account you act from')
+  .option('-t, --appToken [token]', 'Application token of the account you act from (MNO, Reseller, Service Provider)')
   .option('-e, --enterpriseAppToken [token]', 'Application token of the enterprise account you want to move the SIMs away from')
   .parse(process.argv);
 
@@ -29,7 +29,7 @@ const eventEmitter = new events.EventEmitter();
 const API_URL = "https://cdn.emnify.net/api/v1";
 let masterToken;
 let enterpriseToken;
-let imsis;
+let identifiers;
 let arrayOfSimIds;
 getAuthToken(program.appToken, "master");
 getAuthToken(program.enterpriseAppToken, "enterprise");
@@ -41,8 +41,13 @@ eventEmitter.on("enterprise authentication success", function(token) {
 
 eventEmitter.on("master authentication success", function(token) {
   masterToken = token;
-  imsis = readImsis();
-  getSimIdsFromImsis(imsis);
+  identifiers = readList();
+  if (program.simIdentifierType) {
+    getSimIds(identifiers, program.simIdentifierType);
+  }
+  else {
+    return console.error("No identifyer found, please specify if your input are of type imsi, iccid or simid");
+  }
 });
 
 eventEmitter.on("simids pulled", function(simIds) {
@@ -161,63 +166,68 @@ function getAuthToken(token, orgType) {
   }
 }
 
-function readImsis() {
-  let imsis;
-  if (program.imsiCsvFile) {
-    const filePath = path.join(__dirname, program.imsiCsvFile);
+function readList() {
+  let identifiers;
+  if (program.csvFile) {
+    const filePath = path.join(__dirname, program.csvFile);
     fs.readFile(filePath, {
       encoding: 'utf-8'
     }, function (err, csvContent) {
       if (!err) {
-        imsis = csvContent.split(',');
-        console.log("Sucessfully read the CSV file with the content", imsis);
-        return imsis;
+        identifiers = csvContent.split(',');
+        console.log("Sucessfully read the CSV file with the content", identifiers);
+        return identifiers;
       } else {
         console.log(err);
       }
     });
-  } else if (program.imsiList) {
-    imsis = program.imsiList.split(',');
-    console.log("Sucessfully read the imsis from the CLI", imsis);
-    return imsis;
+  } else if (program.list) {
+    identifiers = program.list.split(',');
+    console.log("Sucessfully read the input from the CLI", identifiers);
+    return identifiers;
   }
   else {
-    return console.error("Missing IMSIs to be moved, please specify a file or the list directly in the CLI");
+    return console.error("Missing identifiers to be moved, please specify a file or the list directly in the CLI");
   }
 }
 
-function getSimIdsFromImsis(imsis) {
-  let imsiProcessed = 0;
+function getSimIds(identifiers, type) {
+  if (type === "simid") {
+    eventEmitter.emit("simids pulled", identifiers);
+    return identifiers
+  };
+
+  let identifiersProcessed = 0;
   (function () {
     let arrayOfSimIds = [];
-    imsis.forEach(function (imsi, index, array) {
-      throttledRequest(API_URL + "/sim?page=1&per_page=2&q=imsi:" + imsi, {
+    identifiers.forEach(function (id, index, array) {
+      throttledRequest(API_URL + "/sim?page=1&per_page=2&q=" + type + ":" + id, {
         'auth': {
           'bearer': masterToken
         },
         json: true
       }, function (err, res, body) {
         if (err) {
-          return console.error("Error getting the SIM for IMSI", imsi, err);
+          return console.error("Error getting the SIM for", type, id, err);
         }
         else if (!body.length) {
-          return console.error("IMSI", imsi, "matches no SIM.");
+          return console.error(type, id, "matches no SIM.");
         }
         else if (body.length > 1) {
-          return console.error("IMSI", imsi, "matches more than one SIM.");
+          return console.error(type, id, "matches more than one SIM.");
         }
         else if (res.statusCode === 200) {
           let simId = body[0].id;
           arrayOfSimIds.push(simId);
-          console.log('SIM ID for IMSI', imsi, 'is', simId);
-          imsiProcessed++;
-          if (imsiProcessed === array.length) {
+          console.log('SIM ID for', type, id, 'is', simId);
+          identifiersProcessed++;
+          if (identifiersProcessed === array.length) {
             eventEmitter.emit("simids pulled", arrayOfSimIds);
             return arrayOfSimIds;
           }
         }
         else {
-          return console.error("Errorcode", res.statusCode, "occured while getting SIM with IMSI", imsi);
+          return console.error("Errorcode", res.statusCode, "occured while getting SIM with", type, id);
         }
       });
     });
