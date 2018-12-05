@@ -28,12 +28,16 @@ sudo apt install git nodejs
 > In the same terminal that you just opened (git bash or terminal at Ubuntu), execute the follwing:
 ```
 cd ~/Desktop
-git clone git@github.com:EMnify/simMover.git
+git clone git://github.com/EMnify/simMover.git
 cd simMover
 npm install
 node index.js --help
 ```
 > This should download this script, install all dependent modules and print the help that should explain you how to use the script.
+> 
+### Things that could go wrong
+1. You are on another or older operating system
+    1. Error: `npm: command not found` => Solution: `sudo apt install npm`
 
 ## Usage
 > The script can take a file as input like the sample file with comma seperated IMSIS like so:
