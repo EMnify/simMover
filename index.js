@@ -14,7 +14,7 @@ throttledRequest.configure({
 }); //This will throttle the requests so no more than 3 are made every second
 
 program
-  .version('1.4.0')
+  .version('1.3.1')
   .option('-t, --simIdentifierType [simid, imsi or iccid]', 'Define whether you want to identiy your SIM by simid, imsi or iccid')
   .option('-l, --list [list of simids, imsis, or iccids]', 'List of simIdentifiers to be moved like 123,234')
   .option('-c, --csvFile [path]', 'Path to a file that contains a comma seperated list of simIdentifiers - NO headline')
