@@ -69,7 +69,7 @@ let simsProcessed = 0;
   let arrayOfEndpointIds = [];
 
   simIds.forEach(function (simId, index, array) {
-    throttledRequest(API_URL + "/endpoint?page=1&per_page=2&q=sim:" + simId, {
+    throttledRequest(API_URL + "/sim/" + simId, {
       'auth': {
         'bearer': masterToken
       },
@@ -78,16 +78,13 @@ let simsProcessed = 0;
       if (err) {
         return console.error("Error getting the endpoint for simId", simid, err, body);
       }
-      else if (!body.length) {
+      else if (!body.endpoint) {
         console.log("SIM", simId, "is not connected to an endpoint");
         eventEmitter.emit("sims released from endpoints");
         return true;
       }
-      else if (body.length > 1) {
-        return console.error("SIM", simId, "matches more than one SIM.");
-      }
       else if (res.statusCode === 200) {
-        let endpointId = body[0].id;
+        let endpointId = body.endpoint.id;
         arrayOfEndpointIds.push(endpointId);
         console.log('SIM', simId, 'is connected to', endpointId);
         simsProcessed++;
@@ -244,20 +241,20 @@ function updateAllSimsOrgId(simIds) {
       throttledRequest({
         method: 'PATCH',
         uri: API_URL + "/sim/" + simId,
-        auth: {
-          bearer: masterToken
+        'auth': {
+          'bearer': masterToken
         },
-        body: {
-          customer_org: {
-            id: program.destinationOrgId
-          },
+        'body': {
+          'customer_org': {
+            'id': parseInt(program.destinationOrgId)
+          }
         },
         json: true
       }, function (err, res, body) {
         if (err) {
           return console.error("Error patching the SIM for simId", simId, err, body);
         }
-        else if (res.statusCode === 200) {
+        else if (res.statusCode === 204) {
           console.log('Update simId', simId, 'to organisation', program.destinationOrgId);
           simsProcessed++;
           if (simsProcessed === array.length) {
