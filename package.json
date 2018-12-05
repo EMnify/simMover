@@ -1,6 +1,6 @@
 {
   "name": "@emnify/imsimover",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "EMnify helper script to move a list of IMSIs to another organisation",
   "main": "index.js",
   "author": "EMnify GmbH",
