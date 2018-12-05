@@ -76,7 +76,7 @@ let simsProcessed = 0;
       json: true
     }, function (err, res, body) {
       if (err) {
-        return console.error("Error getting the endpoint for simId", simid, err);
+        return console.error("Error getting the endpoint for simId", simid, err, body);
       }
       else if (!body.length) {
         console.log("SIM", simId, "is not connected to an endpoint");
@@ -96,7 +96,7 @@ let simsProcessed = 0;
           return arrayOfEndpointIds;
         }
       } else {
-        return console.error("Errorcode", res.statusCode, "occured while getting endpoint for SIM", simId);
+        return console.error("Errorcode", res.statusCode, "occured while getting endpoint for SIM", simId, body);
       }
     });
   });
@@ -123,7 +123,7 @@ function releaseSimsFromEndpoints(endpointIds) {
           json: true
         }, function (err, res, body) {
           if (err) {
-            return console.error("Error releasing the SIM for endpoint", endpointId, err);
+            return console.error("Error releasing the SIM for endpoint", endpointId, err, body);
           }
           else if (res.statusCode === 204) {
             console.log('Released sim from endpoint', endpointId);
@@ -133,7 +133,7 @@ function releaseSimsFromEndpoints(endpointIds) {
               return true;
             }
           } else {
-            return console.error("Errorcode", res.statusCode, "occured while updating endpoint", endpointId);
+            return console.error("Errorcode", res.statusCode, "occured while updating endpoint", endpointId, body);
           }
         });
       }
@@ -152,7 +152,7 @@ function getAuthToken(token, orgType) {
       json: true
     }, function (err, res, body) {
       if (err) {
-        return console.error("Error authenticating with the application token", err);
+        return console.error("Error authenticating with the application token", err, body);
       }
       if (res.statusCode === 200) {
         console.log("Successfully authenticated using the application token");
@@ -160,7 +160,7 @@ function getAuthToken(token, orgType) {
         return body.auth_token;
       }
       else {
-        return console.error("Errorcode", res.statusCode, "occured while authenticating");
+        return console.error("Errorcode", res.statusCode, "occured while authenticating", body);
       }
     });
   }
@@ -208,7 +208,7 @@ function getSimIds(identifiers, type) {
         json: true
       }, function (err, res, body) {
         if (err) {
-          return console.error("Error getting the SIM for", type, id, err);
+          return console.error("Error getting the SIM for", type, id, err, body);
         }
         else if (!body.length) {
           return console.error(type, id, "matches no SIM.");
@@ -227,7 +227,7 @@ function getSimIds(identifiers, type) {
           }
         }
         else {
-          return console.error("Errorcode", res.statusCode, "occured while getting SIM with", type, id);
+          return console.error("Errorcode", res.statusCode, "occured while getting SIM with", type, id, body);
         }
       });
     });
@@ -255,7 +255,7 @@ function updateAllSimsOrgId(simIds) {
         json: true
       }, function (err, res, body) {
         if (err) {
-          return console.error("Error patching the SIM for simId", simId, err);
+          return console.error("Error patching the SIM for simId", simId, err, body);
         }
         else if (res.statusCode === 200) {
           console.log('Update simId', simId, 'to organisation', program.destinationOrgId);
@@ -265,7 +265,7 @@ function updateAllSimsOrgId(simIds) {
           }
         }
         else {
-          return console.error("Errorcode", res.statusCode, "occured while updating SIMid", simId);
+          return console.error("Errorcode", res.statusCode, "occured while updating SIMid", simId, body);
         }
       });
     }
