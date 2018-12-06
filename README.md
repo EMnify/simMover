@@ -55,7 +55,7 @@ node index.js --simIdentifierType iccid --list 123,2345 --destinationOrgId 4192 
 | -V | --version            | output the version number                                                       | false |       |
 | -t | --simIdentifierType  | Define whether you want to identiy your SIM by simid, imsi or iccid             | true  | iccid |
 | -l | --list               | List of simIdentifiers to be moved like 123,234'                                |       |       |
-| -c | --imsiCsvFile        | Path to a file that contains a comma seperated list of simIdentifiers - NO headline |       | sample.csv |
+| -c | --csvFile            | Path to a file that contains a comma seperated list of simIdentifiers - NO headline |       | sample.csv |
 | -o | --destinationOrgId   | Destination organisation ID to move them to                                     | true  | 1234  |
 | -s | --setStatus          | Set the status of moved SIM cards [activated, suspended, issued or deleted]     | true  | suspended  |
 | -d | --dryRun             | Outputs planned changes without executing them live                             | false |       |
