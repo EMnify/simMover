@@ -14,11 +14,12 @@ throttledRequest.configure({
 }); //This will throttle the requests so no more than 3 are made every second
 
 program
-  .version('1.3.1')
+  .version('1.4.0')
   .option('-t, --simIdentifierType [simid, imsi or iccid]', 'Define whether you want to identiy your SIM by simid, imsi or iccid')
   .option('-l, --list [list of simids, imsis, or iccids]', 'List of simIdentifiers to be moved like 123,234')
   .option('-c, --csvFile [path]', 'Path to a file that contains a comma seperated list of simIdentifiers - NO headline')
   .option('-o, --destinationOrgId [orgId]', 'Destination organisation ID to move them to')
+  .option('-s, --setStatus [activated, suspended, issued or deleted]', 'Set status of moved SIM cards')
   .option('-d, --dryRun', 'Output changes without executing them live')
   .option('-t, --appToken [token]', 'Application token of the account you act from (MNO, Reseller, Service Provider)')
   .option('-e, --enterpriseAppToken [token]', 'Application token of the enterprise account you want to move the SIMs away from')
@@ -232,6 +233,21 @@ function getSimIds(identifiers, type) {
 }
 
 function updateAllSimsOrgId(simIds) {
+
+  let statuses = {
+    issued: 0,
+    activated: 1,
+    suspended: 2,
+    deleted: 3
+  }
+
+  if (!program.setStatus) {
+    return console.error("Please define the status the sims should be set to with --setStatus");
+  }
+  else if (!statuses[program.setStatus.toLowerCase()]) {
+    return console.error("The status you set does not match any of the statuses [issued, activated, suspended, deleted]");
+  }
+  
   let simsProcessed = 0;
   simIds.forEach(function (simId, index, array) {
     if (program.dryRun) {
@@ -245,6 +261,9 @@ function updateAllSimsOrgId(simIds) {
           'bearer': masterToken
         },
         'body': {
+          'status': {
+            'id': parseInt(statuses[program.setStatus.toLowerCase()])
+          },
           'customer_org': {
             'id': parseInt(program.destinationOrgId)
           }
