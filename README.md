@@ -42,11 +42,11 @@ node index.js --help
 ## Usage
 > The script can take a file as input like the sample file with comma seperated IMSIS like so:
 ```
-node index.js --simIdentifierType iccid --csvFile sample.csv --destinationOrgId 4192 --dryRun --appToken tokenOfYourAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
+node index.js --simIdentifierType iccid --csvFile sample.csv --destinationOrgId 4192 --setStatus suspended --dryRun --appToken tokenOfYourAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
 ```
 > Or you give the imsis directly as parameters like so:
 ```
-node index.js --simIdentifierType iccid --list 123,2345 --destinationOrgId 4192 --dryRun --appToken tokenOfYourAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
+node index.js --simIdentifierType iccid --list 123,2345 --destinationOrgId 4192 --setStatus suspended --dryRun --appToken tokenOfYourAccount --enterpriseAppToken appTokenOfTheEnterpriseWithTheSimsCurrentlyAssigned
 ```
 
 ### Parameters
@@ -57,6 +57,7 @@ node index.js --simIdentifierType iccid --list 123,2345 --destinationOrgId 4192 
 | -l | --list               | List of simIdentifiers to be moved like 123,234'                                |       |       |
 | -c | --imsiCsvFile        | Path to a file that contains a comma seperated list of simIdentifiers - NO headline |       | sample.csv |
 | -o | --destinationOrgId   | Destination organisation ID to move them to                                     | true  | 1234  |
+| -s | --setStatus          | Set the status of moved SIM cards [activated, suspended, issued or deleted]     | true  | suspended  |
 | -d | --dryRun             | Outputs planned changes without executing them live                             | false |       |
 | -t | --appToken           | Application token of the account you act from  (MNO, Reseller, Service Provider)| true  | token |
 | -e | --enterpriseAppToken | Application token of the enterprise account you want to move the SIMs away from | true  | token |
