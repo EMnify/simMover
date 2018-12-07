@@ -9,6 +9,8 @@ The execution of the API requests is being throttled to 2 requests per second in
 
 The account you use for executin needs to have the "support" role assigned, otherwise the script can't detatch the SIMs from the endpoints of the organisation they are moved away from.
 
+![Sample image of script usage](/console_output.png)
+
 ## Installation
 
 ### On Ubuntu or Debian
