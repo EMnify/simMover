@@ -60,7 +60,10 @@ const askQuestions = () => {
       name: "STATUS",
       type: "list",
       message: "To which status should the sims be set when they are moved?",
-      choices: ["activated", "suspended", "issued", "deleted"]
+      choices: ["Leave the status untouched", "Set it to activated", "Set it to suspended"],
+      filter: function (val) {
+        return val.split(" ")[3];
+      }
     },
     {
       name: "MASTERTOKEN",
@@ -123,11 +126,11 @@ const getArrayOfEndpointIdsPerSim = (arrayOfSimIds, masterToken) => {
   });
 }
 
-const releaseSimsFromEndpoints = (endpointIds, enterpriseToken) => {
+const releaseSimsFromEndpoints = (endpointIds, enterpriseToken, dryRun) => {
   return new Promise((resolve, reject) => {
     let endpointsProcessed = 0;
     endpointIds.forEach(function (endpointId, index, array) {
-      if (program.dryRun) {
+      if (dryRun) {
         console.log('DRY RUN: Release sim from endpoint', endpointId);
       } else {
         throttledRequest({
@@ -234,34 +237,40 @@ const getArrayOfSimIds = (identifiers, type, masterToken) => {
   });
 }
 
-const updateAllSimsOrgId = (simIds, masterToken) => {
+const updateAllSimsOrgId = (simIds, orgId, status, masterToken, dryRun) => {
   return new Promise((resolve, reject) => {
     let simsProcessed = 0;
     simIds.forEach(function (simId, index, array) {
-      if (program.dryRun) {
-        console.log('DRY RUN: Would have updated simId', simId, 'to organisation', program.destinationOrgId, 'and set status to', program.setStatus);
+      if (dryRun) {
+        console.log('DRY RUN: Would have updated simId', simId, 'to organisation', orgId, 'and set status to', status);
         resolve(true);
       } else {
+
+        let body = {
+          'customer_org': {
+            'id': parseInt(orgId)
+          }
+        };
+
+        if (status !== "untouched") {
+          body.status = {
+            'id': parseInt(simStatuses[status])
+          }
+        };
+
         throttledRequest({
           method: 'PATCH',
           uri: API_URL + "/sim/" + simId,
           'auth': {
             'bearer': masterToken
           },
-          'body': {
-            'status': {
-              'id': parseInt(simStatuses[program.setStatus.toLowerCase()])
-            },
-            'customer_org': {
-              'id': parseInt(program.destinationOrgId)
-            }
-          },
+          'body': body,
           json: true
         }, function (err, res, body) {
           if (err) {
             console.log("Error patching the SIM for simId", simId, err, body);
           } else if (res.statusCode === 204) {
-            console.log('Updated simId', simId, 'to organisation', program.destinationOrgId, 'and set status to', program.setStatus);
+            console.log('Updated simId', simId, 'to organisation', orgId, 'and set status to', status);
           } else {
             console.log("Errorcode", res.statusCode, "occured while updating SIMid", simId, body);
           }
@@ -279,24 +288,19 @@ const updateAllSimsOrgId = (simIds, masterToken) => {
 const run = async () => {
   try {
     const answers = await askQuestions();
-    console.log("after questions", answers);
-
     const masterAuthToken = await authenticate(answers.MASTERTOKEN);
     const enterpriseAuthToken = await authenticate(answers.ENTERPRISETOKEN);
     const listOfIdentifiers = await readCsvFile(answers.FILEPATH);
-    console.log("After readCsvFile", listOfIdentifiers);
     const arrayOfSimIds = await getArrayOfSimIds(listOfIdentifiers, answers.IDENTIFIER, masterAuthToken);
 
-    let ready = false;
+    let endpointIds;
     if (arrayOfSimIds.length > 0) {
-      const endpointIds = await getArrayOfEndpointIdsPerSim(arrayOfSimIds, masterAuthToken);
-      ready = await releaseSimsFromEndpoints(endpointIds, enterpriseAuthToken);
-    } else {
-      ready = true
+      endpointIds = await getArrayOfEndpointIdsPerSim(arrayOfSimIds, masterAuthToken);
     }
-    if (ready) {
-      updateAllSimsOrgId(arrayOfSimIds, masterAuthToken);
+    if (endpointIds.length > 0) {
+      releaseSimsFromEndpoints(endpointIds, enterpriseAuthToken, answers.DRYRUN);
     }
+    updateAllSimsOrgId(arrayOfSimIds, answers.DESTORGID, answers.STATUS, masterAuthToken, answers.DRYRUN);
   } catch (err) {
     console.error(err);
   };
