@@ -14,11 +14,11 @@ The account you use for executin needs to have the "support" role assigned, othe
 ### On Ubuntu or Debian
 Open the terminal and type the following
 ```
-sudo apt install git nodejs yarn
+sudo apt install git nodejs
 git clone git://github.com/EMnify/simMover.git ~/simMover
 cd ~/simMover
-yarn
-sudo yarn link
+npm install
+sudo npm link
 ```
 > This should download this script, install all dependent modules and install the script so you can use it everywhere. 
 
