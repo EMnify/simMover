@@ -68,19 +68,19 @@ const askQuestions = () => {
     },
     {
       name: "MASTERTOKEN",
-      type: "input",
+      type: "password",
       message: "Please give an application token of the managing organisation that wants to move SIM cards from one organisation to another one.",
       validate: function (val) {
         if (jwt.decode(val)) {
           return true;
         } else {
           return "Please enter a valid application token."
-        } 
+        }
       }
     },
     {
       name: "ENTERPRISETOKEN",
-      type: "input",
+      type: "password",
       message: "Please give an application token of the enterprise where the SIM cards are currently residing so they can be unlinked from the endpoints there.",
       validate: function (val) {
         if (val)
@@ -94,12 +94,16 @@ const askQuestions = () => {
   return inquirer.prompt(questions);
 };
 
-const getArrayOfEndpointIdsPerSim = (arrayOfSimIds, masterToken) => {
+const unlinkSimsFromEndpoints = (arrayOfSimIds, masterToken, enterpriseToken, dryRun) => {
   return new Promise((resolve, reject) => {
-    let simsProcessed = 0;
-    let arrayOfEndpointIds = [];
-
-    arrayOfSimIds.forEach(function (simId, index, array) {
+    if (arrayOfSimIds.length < 1) {
+      let t = jwt.decode(masterAuthToken);
+      console.log("Are you sure these SIM cards belong to " + t["esc.org"] + "/" + t["esc.orgName"] + "?");
+      resolve(true);
+    }
+    let promises = [];
+    for (let i = 1; i <= arrayOfSimIds.length; i++) {
+      let simId = arrayOfSimIds[i-1];
       throttledRequest(API_URL + "/sim/" + simId, {
         'auth': {
           'bearer': masterToken
@@ -110,57 +114,55 @@ const getArrayOfEndpointIdsPerSim = (arrayOfSimIds, masterToken) => {
           console.log("Error getting the endpoint for simId", simid, err, body);
         } else if (!body.endpoint) {
           console.log("SIM", simId, "is not connected to an endpoint");
-          resolve([]);
         } else if (res.statusCode === 200) {
-          let endpointId = body.endpoint.id;
-          arrayOfEndpointIds.push(endpointId);
-          console.log('SIM', simId, 'is connected to', endpointId);
+          console.log('SIM', simId, 'is connected to', body.endpoint.id);
+          promises.push(unlinkSim(body.endpoint.id, enterpriseToken, dryRun));
         } else {
           console.log("Errorcode", res.statusCode, "occured while getting endpoint for SIM", simId, body);
         }
-        simsProcessed++;
-        if (simsProcessed === array.length) {
-          resolve(arrayOfEndpointIds);
-        }
-      });
-    });
-  });
-}
-
-const releaseSimsFromEndpoints = (endpointIds, enterpriseToken, dryRun) => {
-  return new Promise((resolve, reject) => {
-    let endpointsProcessed = 0;
-    endpointIds.forEach(function (endpointId, index, array) {
-      if (dryRun) {
-        console.log('DRY RUN: Release sim from endpoint', endpointId);
-      } else {
-        throttledRequest({
-          method: 'PATCH',
-          uri: API_URL + "/endpoint/" + endpointId,
-          auth: {
-            bearer: enterpriseToken
-          },
-          body: {
-            sim: {
-              id: null
-            }
-          },
-          json: true
-        }, function (err, res, body) {
-          if (err) {
-            console.log("Error releasing the SIM for endpoint", endpointId, err, body);
-          } else if (res.statusCode === 204) {
-            console.log('Released sim from endpoint', endpointId);
+        if (i === arrayOfSimIds.length) {
+          if (promises.length > 0) {
+            Promise.all(promises)
+              .then(data => {
+                resolve(true);
+              });
           } else {
-            console.log("Errorcode", res.statusCode, "occured while updating endpoint", endpointId, body);
-          }
-          endpointsProcessed++;
-          if (endpointsProcessed === array.length) {
             resolve(true);
           }
-        });
-      }
-    });
+        }
+      });
+    };
+  });
+};
+
+const unlinkSim = (endpointId, enterpriseToken, dryRun) => {
+  return new Promise((resolve, reject) => {
+    if (dryRun) {
+      console.log('DRY RUN: Release sim from endpoint', endpointId);
+    } else {
+      throttledRequest({
+        method: 'PATCH',
+        uri: API_URL + "/endpoint/" + endpointId,
+        auth: {
+          bearer: enterpriseToken
+        },
+        body: {
+          sim: {
+            id: null
+          }
+        },
+        json: true
+      }, function (err, res, body) {
+        if (err) {
+          console.log("Error releasing the SIM for endpoint", endpointId, err, body);
+        } else if (res.statusCode === 204) {
+          console.log('Released sim from endpoint', endpointId);
+          resolve(true);
+        } else {
+          console.log("Errorcode", res.statusCode, "occured while updating endpoint", endpointId, body);
+        }
+      });
+    }
   });
 }
 
@@ -295,19 +297,8 @@ const run = async () => {
     const enterpriseAuthToken = await authenticate(answers.ENTERPRISETOKEN);
     const listOfIdentifiers = await readCsvFile(answers.FILEPATH);
     const arrayOfSimIds = await getArrayOfSimIds(listOfIdentifiers, answers.IDENTIFIER, masterAuthToken);
-
-    let endpointIds;
-    if (arrayOfSimIds.length > 0) {
-      endpointIds = await getArrayOfEndpointIdsPerSim(arrayOfSimIds, masterAuthToken);
-      if (endpointIds.length > 0) {
-        releaseSimsFromEndpoints(endpointIds, enterpriseAuthToken, answers.DRYRUN);
-      }
-      updateAllSimsOrgId(arrayOfSimIds, answers.DESTORGID, answers.STATUS, masterAuthToken, answers.DRYRUN);
-    }
-    else {
-      let t = jwt.decode(masterAuthToken);
-      console.log("Are you sure these SIM cards belong to " + t["esc.org"] + "/" + t["esc.orgName"] + "?");
-    }
+    const success = await unlinkSimsFromEndpoints(arrayOfSimIds, masterAuthToken, enterpriseAuthToken, answers.DRYRUN);
+    updateAllSimsOrgId(arrayOfSimIds, answers.DESTORGID, answers.STATUS, masterAuthToken, answers.DRYRUN);
   } catch (err) {
     console.error(err);
   };
