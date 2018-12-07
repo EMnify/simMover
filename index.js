@@ -6,6 +6,7 @@ const Promise = require('promise');
 const request = require('request');
 const throttledRequest = require('throttled-request')(request);
 const inquirer = require("inquirer");
+const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 
@@ -70,11 +71,11 @@ const askQuestions = () => {
       type: "input",
       message: "Please give an application token of the managing organisation that wants to move SIM cards from one organisation to another one.",
       validate: function (val) {
-        if (val)
-          return true
-        else {
-          return "Please enter the application token."
-        }
+        if (jwt.decode(val)) {
+          return true;
+        } else {
+          return "Please enter a valid application token."
+        } 
       }
     },
     {
@@ -165,6 +166,8 @@ const releaseSimsFromEndpoints = (endpointIds, enterpriseToken, dryRun) => {
 
 const authenticate = (token) => {
   return new Promise((resolve, reject) => {
+    let t = jwt.decode(token);
+    console.log("Authenticating user " + t["sub"] + " of organisation " + t["esc.org"] + "/" + t["esc.orgName"]);
     request.post(API_URL + "/authenticate", {
       body: {
         "application_token": token
@@ -172,13 +175,13 @@ const authenticate = (token) => {
       json: true
     }, function (err, res, body) {
       if (err) {
-        console.log("Error authenticating with the application token", err, body);
+        console.log("Error authenticating", t["sub"], err, body);
       }
       if (res.statusCode === 200) {
-        console.log("Successfully authenticated using the application token");
+        console.log("Successfully authenticated", t["sub"]);
         resolve(body.auth_token);
       } else {
-        console.log("Errorcode", res.statusCode, "occured while authenticating", body);
+        console.log("Errorcode", res.statusCode, "occured while authenticating", t["sub"], body);
       }
     });
   });
@@ -296,11 +299,15 @@ const run = async () => {
     let endpointIds;
     if (arrayOfSimIds.length > 0) {
       endpointIds = await getArrayOfEndpointIdsPerSim(arrayOfSimIds, masterAuthToken);
+      if (endpointIds.length > 0) {
+        releaseSimsFromEndpoints(endpointIds, enterpriseAuthToken, answers.DRYRUN);
+      }
+      updateAllSimsOrgId(arrayOfSimIds, answers.DESTORGID, answers.STATUS, masterAuthToken, answers.DRYRUN);
     }
-    if (endpointIds.length > 0) {
-      releaseSimsFromEndpoints(endpointIds, enterpriseAuthToken, answers.DRYRUN);
+    else {
+      let t = jwt.decode(masterAuthToken);
+      console.log("Are you sure these SIM cards belong to " + t["esc.org"] + "/" + t["esc.orgName"] + "?");
     }
-    updateAllSimsOrgId(arrayOfSimIds, answers.DESTORGID, answers.STATUS, masterAuthToken, answers.DRYRUN);
   } catch (err) {
     console.error(err);
   };
