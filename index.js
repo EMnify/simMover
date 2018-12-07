@@ -67,7 +67,7 @@ const askQuestions = () => {
     },
     {
       name: "MASTERTOKEN",
-      type: "password",
+      type: "input",
       message: "Please give an application token of the managing organisation that wants to move SIM cards from one organisation to another one.",
       validate: function (val) {
         if (val)
@@ -79,7 +79,7 @@ const askQuestions = () => {
     },
     {
       name: "ENTERPRISETOKEN",
-      type: "password",
+      type: "input",
       message: "Please give an application token of the enterprise where the SIM cards are currently residing so they can be unlinked from the endpoints there.",
       validate: function (val) {
         if (val)
