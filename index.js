@@ -49,12 +49,10 @@ const askQuestions = () => {
       type: "input",
       message: "What's the organisation id of the organisation you want to move the sim cards to?",
       validate: function (val) {
-        let num = Number(val);
-        if (num > 0)
-          return true
-        else {
-          return "Please enter a valid organisation id."
-        }
+        if (val > 0 || val === 'null')
+          return true;
+        else
+          return "Please enter a valid organisation id or 'null' if you want to remove the customer org id completely."
       }
     },
     {
@@ -79,15 +77,22 @@ const askQuestions = () => {
       }
     },
     {
+      name: "UNLINKENDPOINTS",
+      type: "confirm",
+      message: "Do you want to unlink the endpoints associated with the selected SIMs?"
+    },
+    {
+      when: function (response) {
+        return response.UNLINKENDPOINTS;
+      },
       name: "ENTERPRISETOKEN",
       type: "password",
       message: "Please give an application token of the enterprise where the SIM cards are currently residing so they can be unlinked from the endpoints there.",
       validate: function (val) {
         if (val)
-          return true
-        else {
+          return true;
+        else
           return "Please enter the application token."
-        }
       }
     },
   ];
@@ -165,7 +170,7 @@ const unlinkSim = (endpointId, simId, enterpriseToken, dryRun) => {
       });
     }
   });
-}
+};
 
 const authenticate = (token) => {
   return new Promise((resolve, reject) => {
@@ -188,7 +193,7 @@ const authenticate = (token) => {
       }
     });
   });
-}
+};
 
 function readCsvFile(filePathString) {
   return new Promise((resolve, reject) => {
@@ -245,7 +250,7 @@ const getArrayOfSimIds = (identifiers, type, masterToken) => {
       });
     });
   });
-}
+};
 
 const updateAllSimsOrgId = (simIds, orgId, status, masterToken, dryRun) => {
   return new Promise((resolve, reject) => {
@@ -267,7 +272,7 @@ const updateAllSimsOrgId = (simIds, orgId, status, masterToken, dryRun) => {
           body.status = {
             'id': parseInt(simStatuses[status])
           }
-        };
+        }
 
         throttledRequest({
           method: 'PATCH',
@@ -294,20 +299,25 @@ const updateAllSimsOrgId = (simIds, orgId, status, masterToken, dryRun) => {
       }
     });
   });
-}
+};
 
 const run = async () => {
   try {
     const answers = await askQuestions();
     const masterAuthToken = await authenticate(answers.MASTERTOKEN);
-    const enterpriseAuthToken = await authenticate(answers.ENTERPRISETOKEN);
+
     const listOfIdentifiers = await readCsvFile(answers.FILEPATH);
     const arrayOfSimIds = await getArrayOfSimIds(listOfIdentifiers, answers.IDENTIFIER, masterAuthToken);
-    const success = await unlinkSimsFromEndpoints(arrayOfSimIds, masterAuthToken, enterpriseAuthToken, answers.DRYRUN);
+
+    if (answers.UNLINKENDPOINTS) {
+        const enterpriseAuthToken = await authenticate(answers.ENTERPRISETOKEN);
+        const success = await unlinkSimsFromEndpoints(arrayOfSimIds, masterAuthToken, enterpriseAuthToken, answers.DRYRUN);
+    }
+
     updateAllSimsOrgId(arrayOfSimIds, answers.DESTORGID, answers.STATUS, masterAuthToken, answers.DRYRUN);
   } catch (err) {
     console.error(err);
-  };
+  }
 };
 
 run();
