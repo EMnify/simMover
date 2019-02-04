@@ -52,7 +52,7 @@ const askQuestions = () => {
         if (val > 0 || val === 'null')
           return true;
         else
-          return "Please enter a valid organisation id."
+          return "Please enter a valid organisation id or 'null' if you want to remove the customer org id completely."
       }
     },
     {
