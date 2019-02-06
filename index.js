@@ -59,7 +59,7 @@ const askQuestions = () => {
       name: "STATUS",
       type: "list",
       message: "To which status should the sims be set when they are moved?",
-      choices: ["Leave the status untouched", "Set it to activated", "Set it to suspended"],
+      choices: ["Leave the status untouched", "Set it to issued", "Set it to activated", "Set it to suspended"],
       filter: function (val) {
         return val.split(" ")[3];
       }
